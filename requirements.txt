@@ -5,3 +5,4 @@ cairosvg
 pillow
 snowflake-connector-python
 plotly
+app
