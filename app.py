@@ -6,7 +6,6 @@ app.py
 manage snowflake connection
 """
 import snowflake.connector
-import numpy
 import pandas as pd
 import requests
 import cairosvg

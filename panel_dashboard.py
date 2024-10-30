@@ -14,7 +14,7 @@ from PIL import Image
 from io import BytesIO
 import requests
 import cairosvg
-import snowflake.connector
+# import snowflake.connector
 
 """# def get_stats():
 #     conn = snowflake.connector.connect(
