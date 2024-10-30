@@ -3,6 +3,5 @@ pandas
 requests
 cairosvg
 pillow
-io
 snowflake-connector-python
 plotly
