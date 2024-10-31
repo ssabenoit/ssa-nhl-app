@@ -19,9 +19,9 @@ class nhl_snowflake():
         # create the connection
         self.conn = snowflake.connector.connect(
             user='ssanick',
-            password='SSA_nhl_2024!',
+            password='Southshore2024!',
             account='jp55454.us-east-2.aws',
-            warehouse='COMPUTE_WH',
+            warehouse='DBT_WH',
             database='DBT_ANALYTICS',
             schema='PROD'
         )
@@ -76,20 +76,20 @@ class nhl_snowflake():
         
         cur.close()
 
-    def get_stat_leaders(self, stat, season):
+    def get_stat_leaders(self, stat, season, order='desc'):
         
         # get all the teams ranked by the given stat
         cur = self.conn.cursor()
-        cur.execute(f"select TEAM_ABV, {stat} from TEAM_SEASON_STATS_REGULAR where season = {season} order by {stat} desc")
+        cur.execute(f"select TEAM_ABV, LOGO_URL, {stat} from TEAM_SEASON_STATS_REGULAR where season = {season} order by {stat} {order}")
         df = pd.DataFrame(cur.fetchall(), columns=[desc[0] for desc in cur.description])
 
         return df
 
-
     def __del__(self):
         # close the snowflake connection
         self.conn.close()
-        print('Connection Closed')    
+        print('Connection Closed')  
+  
 
 
 # test_app = nhl_snowflake()
