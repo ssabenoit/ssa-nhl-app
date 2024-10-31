@@ -18,10 +18,10 @@ class nhl_snowflake():
     def __init__(self):
         # create the connection
         self.conn = snowflake.connector.connect(
-            user='ssabenoit',
-            password='Ben_032603',
+            user='ssanick',
+            password='SSA_nhl_2024!',
             account='jp55454.us-east-2.aws',
-            warehouse='DBT_WH',
+            warehouse='COMPUTE_WH',
             database='DBT_ANALYTICS',
             schema='PROD'
         )
