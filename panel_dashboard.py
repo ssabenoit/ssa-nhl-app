@@ -102,15 +102,14 @@ class nhl_snowflake():
         
         cur.close()
 
-    def get_stat_leaders(self, stat, season):
+    def get_stat_leaders(self, stat, season, order='desc'):
         
         # get all the teams ranked by the given stat
         cur = self.conn.cursor()
-        cur.execute(f"select TEAM_ABV, {stat} from TEAM_SEASON_STATS_REGULAR where season = {season} order by {stat} desc")
+        cur.execute(f"select TEAM_ABV, LOGO_URL, {stat} from TEAM_SEASON_STATS_REGULAR where season = {season} order by {stat} {order}")
         df = pd.DataFrame(cur.fetchall(), columns=[desc[0] for desc in cur.description])
 
         return df
-
 
     def __del__(self):
         # close the snowflake connection
@@ -179,14 +178,17 @@ def bars_with_icons(stat='GOALS', sort_desc=True, season=None):
     app = nhl_snowflake()
 
     season_val = season.replace('-', '')
-    reg_stats = app.get_reg_season_stats(season=season_val)
+    if sort_desc: order='desc'
+    else: order='asc'
+    reg_stats = app.get_stat_leaders(stat=stat, season=season_val, order=order)
     # print(reg_stats)
 
     # pull in each teams color
     colors = pd.read_csv('teams.csv')
     reg_stats = reg_stats.merge(colors, on=['TEAM_ABV'], how='left')
 
-    reg_stats = reg_stats.sort_values(by=[stat], ascending = not sort_desc).head(7).sort_values(by=[stat], ascending=sort_desc)
+    # reg_stats = reg_stats.sort_values(by=[stat], ascending = not sort_desc).head(7).sort_values(by=[stat], ascending=sort_desc)
+    reg_stats = reg_stats.head(7).sort_values(by=[stat], ascending=sort_desc)
     val = int(reg_stats[stat].max() * 0.15)
 
     # fig = px.scatter(reg_stats, x=x_stat, y=y_stat, hover_name='TEAM_ABV')
@@ -197,18 +199,24 @@ def bars_with_icons(stat='GOALS', sort_desc=True, season=None):
     for idx, row in reg_stats.iterrows():
     
         if row['LOGO_URL'] is not None:
-            # retrieve the image bytes
-            img = requests.get(row['LOGO_URL'])
 
-            # convert the image response to a png if it is not
-            if img.headers['Content-Type'] == 'image/svg+xml':
-                img = cairosvg.svg2png(img.content)
+            if row['TEAM_ABV'] == 'UTA':
+                # retrieve the image bytes
+                img = requests.get(row['LOGO_URL'])
+
+                # convert the image response to a png if it is not
+                if img.headers['Content-Type'] == 'image/svg+xml':
+                    img = cairosvg.svg2png(img.content)
+                    img = BytesIO(img)
+            else:
+                img = f'logos/{row['TEAM_ABV']}.png'
 
             # add the image on top of the points
             fig.add_layout_image(
                 x=row[stat],
                 y=row['TEAM_ABV'],
-                source=Image.open(BytesIO(img)),
+                source=Image.open(img),
+                # source=Image.open(BytesIO(img)),
                 xref="x",
                 yref="y",
                 sizex=val,
@@ -252,33 +260,41 @@ def get_x_table(x_stat = None, season=None):
         # get the season stats and reformatting the stat identifier string
         app = nhl_snowflake()
 
+        # print(x_stat)
+        if x_stat in ['Goals Against', 'Goals Against Average', 'Pim', 'Pim Per Game', 
+                      'Giveaways', 'Giveaways Per Game']:
+            order_by = 'asc'
+        else: order_by = 'desc'
+
         season_val = season.replace('-', '')
-        leaders = app.get_stat_leaders(x_stat.replace(' ', '_').upper(), season=season_val)
+        leaders = app.get_stat_leaders(x_stat.replace(' ', '_').upper(), season=season_val, order=order_by)
 
         columns = [label.replace('_', ' ').title() for label in list(leaders.columns)]
         columns[0] = 'Team'
         leaders.columns = columns 
         leaders.index = [i for i in range(1,len(leaders)+1)]
+        leaders = leaders[['Team', x_stat]]
 
         return leaders
     
 def get_y_table(y_stat = None, season=None):
     ''' same as get_x_table -- can propbably be deprecated '''
 
-    if y_stat is not None:
+    return get_x_table(y_stat, season)
+    # if y_stat is not None:
 
-        # get the season stats and reformatting the stat string
-        app = nhl_snowflake()
+    #     # get the season stats and reformatting the stat string
+    #     app = nhl_snowflake()
 
-        season_val = season.replace('-', '')
-        leaders = app.get_stat_leaders(y_stat.replace(' ', '_').upper(), season=season_val)
+    #     season_val = season.replace('-', '')
+    #     leaders = app.get_stat_leaders(y_stat.replace(' ', '_').upper(), season=season_val)
 
-        columns = [label.replace('_', ' ').title() for label in list(leaders.columns)]
-        columns[0] = 'Team'
-        leaders.columns = columns 
-        leaders.index = [i for i in range(1,len(leaders)+1)]
+    #     columns = [label.replace('_', ' ').title() for label in list(leaders.columns)]
+    #     columns[0] = 'Team'
+    #     leaders.columns = columns 
+    #     leaders.index = [i for i in range(1,len(leaders)+1)]
 
-        return leaders
+    #     return leaders
 
 # enabling panel extensions
 pn.extension(sizing_mode="stretch_width") # design="material"
@@ -291,23 +307,22 @@ season_widget = pn.widgets.Select(name="Season", value='2024-2025', options=['20
 
 # main scatter plot widget
 main_plot = pn.bind(
-    main_scatter, x_stat=xaxis_widget, y_stat=yaxis_widget, season=season_widget
+    main_scatter, 
+    x_stat=xaxis_widget, 
+    y_stat=yaxis_widget, 
+    season=season_widget
 )
 plot_pane = pn.pane.Plotly(main_plot, sizing_mode='stretch_width')
 
 # Goals for and against leaders
-goals_plot = bars_with_icons('GOALS', sort_desc=True, season='2024-2025')
-goals_against_plot = bars_with_icons('GOALS_AGAINST', sort_desc=False, season='2024-2025')
+goals_plot = pn.bind(bars_with_icons, season=season_widget, stat='GOALS', sort_desc=True)
+goals_against_plot = pn.bind(bars_with_icons, season=season_widget, stat='GOALS_AGAINST', sort_desc=False)
 goals_pane = pn.pane.Plotly(goals_plot, sizing_mode='stretch_width')
 goals_against_pane = pn.pane.Plotly(goals_against_plot, sizing_mode='stretch_width')
 
 # stat leaders table widgets
-x_stat_table = pn.bind(
-    get_x_table, x_stat=xaxis_widget, season=season_widget
-)
-y_stat_table = pn.bind(
-    get_y_table, y_stat=yaxis_widget, season=season_widget
-)
+x_stat_table = pn.bind(get_x_table, x_stat=xaxis_widget, season=season_widget)
+y_stat_table = pn.bind(get_y_table, y_stat=yaxis_widget, season=season_widget)
 x_stat_pane = pn.pane.DataFrame(x_stat_table, index=True, max_rows=10)
 y_stat_pane = pn.pane.DataFrame(y_stat_table, index=True, max_rows=10)
 stats_tables = pn.Column(x_stat_pane, y_stat_pane, width=250)
