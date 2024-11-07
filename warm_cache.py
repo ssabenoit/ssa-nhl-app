@@ -45,8 +45,8 @@ def warm_cache():
             get_stat_leaders(stat, season, orders[stat])
             
             # load the table getting functions
-            get_x_table(stat, season)
-            get_y_table(stat, season)
+            get_x_table(stat.replace('_', ' ').title(), season)
+            get_y_table(stat.replace('_', ' ').title(), season)
 
             # load every y stat for the current x stat (for the main scatter plot)
             for second_stat in formatted_stats:
@@ -54,6 +54,9 @@ def warm_cache():
                 if second_stat != stat:
                     main_scatter(stat, second_stat, season)
 
+        print(season, 'data successfully loaded')
+
 
 if __name__ == "__main__":
     warm_cache()
+    print('All inputs successfully cached')
