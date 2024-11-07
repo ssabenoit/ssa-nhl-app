@@ -281,10 +281,6 @@ def warm_cache():
 pn.extension(sizing_mode="stretch_width") # design="material"
 pn.extension('plotly')
 
-# cache clearing logic
-pn.state.schedule_task('clear_cache', clear_caches, cron='2 5 * * *')
-pn.state.schedule_task('load_cache', warm_cache, cron='15 5 * * *')
-
 # selection widgets
 xaxis_widget = pn.widgets.Select(name="X-axis Stat", value='Goals Per Game', options=get_stat_names())
 yaxis_widget = pn.widgets.Select(name="Y-axis Stat", value='Goals Against Average', options=get_stat_names())
@@ -324,7 +320,7 @@ pn.template.MaterialTemplate(
 # run command
 # panel serve panel_dashboard.py --autoreload
 
-#################### OLD #####################
+#################### OLD DASHBOARD LAYOUT #####################
 
 # organizing the dashboard
 # widgets = pn.Column(xaxis_widget, yaxis_widget, sizing_mode="fixed", width=300)
