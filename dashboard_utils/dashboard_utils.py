@@ -1,10 +1,3 @@
-"""
-NHL case study
-Benoit Cambournac
-
-panel_dashboard.py
-dash application to run a simple version of logo nhl scatter plot using panel library
-"""
 import panel as pn
 import pandas as pd
 import plotly.graph_objects as go
@@ -15,7 +8,7 @@ from io import BytesIO
 import requests
 import cairosvg
 # import snowflake.connector
-# from dashboard_utils.dashboard_utils import *
+
 
 @pn.cache
 def get_reg_season_stats(season='20242025'):
@@ -227,104 +220,3 @@ def get_y_table(y_stat = None, season=None):
     #     leaders.index = [i for i in range(1,len(leaders)+1)]
 
     #     return leaders
-
-def clear_caches():
-    pn.state.clear_caches()
-
-def warm_cache():
-    """ setup function to warm the cache with every input combination """
-
-    # clear previously held caches
-    clear_caches()
-
-    # all possible inputs
-    seasons = ["20242025", "20232024"]  
-    stats = get_stat_names() # gets stat names, also warms that cache
-    formatted_stats = [stat.replace(' ', '_').upper() for stat in stats]
-    
-    asc_stats = ['Goals Against', 'Goals Against Average', 'Pim', 'Pim Per Game', 'Giveaways', 'Giveaways Per Game']
-    asc_stats = [stat.replace(' ', '_').upper() for stat in asc_stats]
-   
-    orders = {stat: 'asc' if stat in asc_stats else 'desc' for stat in formatted_stats}
-
-    for season in seasons:
-        
-        # load the reg_season_stats
-        get_reg_season_stats(season)
-
-        # load the season's goals/GA bar graphs
-        bars_with_icons('GOALS', True, season)
-        bars_with_icons('GOALS_AGAINST', False, season)
-
-        for stat in formatted_stats:
-
-            # load the stat leaders
-            get_stat_leaders(stat, season, orders[stat])
-            
-            # load the table getting functions
-            get_x_table(stat, season)
-            get_y_table(stat, season)
-
-            # load every y stat for the current x stat (for the main scatter plot)
-            for second_stat in formatted_stats:
-
-                if second_stat != stat:
-                    main_scatter(stat, second_stat, season)
-
-# enabling panel extensions
-pn.extension(sizing_mode="stretch_width") # design="material"
-pn.extension('plotly')
-
-# cache clearing logic
-# pn.state.schedule_task('task', clear_cache, cron='2 5 * * *')
-
-# selection widgets
-xaxis_widget = pn.widgets.Select(name="X-axis Stat", value='Goals Per Game', options=get_stat_names())
-yaxis_widget = pn.widgets.Select(name="Y-axis Stat", value='Goals Against Average', options=get_stat_names())
-season_widget = pn.widgets.Select(name="Season", value='2024-2025', options=['2024-2025', '2023-2024'])
-
-# main scatter plot widget
-main_plot = pn.bind(
-    main_scatter, 
-    x_stat=xaxis_widget, 
-    y_stat=yaxis_widget, 
-    season=season_widget
-)
-plot_pane = pn.pane.Plotly(main_plot, sizing_mode='stretch_width')
-
-# Goals for and against leaders
-goals_plot = pn.bind(bars_with_icons, season=season_widget, stat='GOALS', sort_desc=True)
-goals_against_plot = pn.bind(bars_with_icons, season=season_widget, stat='GOALS_AGAINST', sort_desc=False)
-goals_pane = pn.pane.Plotly(goals_plot, sizing_mode='stretch_width')
-goals_against_pane = pn.pane.Plotly(goals_against_plot, sizing_mode='stretch_width')
-
-# stat leaders table widgets
-x_stat_table = pn.bind(get_x_table, x_stat=xaxis_widget, season=season_widget)
-y_stat_table = pn.bind(get_y_table, y_stat=yaxis_widget, season=season_widget)
-x_stat_pane = pn.pane.DataFrame(x_stat_table, index=True, max_rows=10)
-y_stat_pane = pn.pane.DataFrame(y_stat_table, index=True, max_rows=10)
-stats_tables = pn.Column(x_stat_pane, y_stat_pane, width=250)
-
-# organize the dashboard with a template and serve it to the server
-pn.template.MaterialTemplate(
-    site="SSA",
-    header_background='#305B5B',
-    title="NHL Dynamic Stat Comparisons",
-    sidebar=[xaxis_widget, yaxis_widget, season_widget],
-    main=[pn.Column(pn.Row(plot_pane, stats_tables), pn.Row(goals_pane, goals_against_pane))],
-).servable()
-
-# run command
-# panel serve panel_dashboard.py --autoreload
-
-#################### OLD #####################
-
-# organizing the dashboard
-# widgets = pn.Column(xaxis_widget, yaxis_widget, sizing_mode="fixed", width=300)
-# pn.Column(widgets, plot_pane)
-
-# app = pn.Column(
-#     pn.Row(xaxis_widget, yaxis_widget), 
-#     plot_pane
-# )
-# app.servable()
