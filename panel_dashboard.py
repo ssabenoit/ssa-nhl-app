@@ -276,7 +276,8 @@ pn.extension(sizing_mode="stretch_width") # design="material"
 pn.extension('plotly')
 
 # cache clearing logic
-# pn.state.schedule_task('task', clear_cache, cron='2 5 * * *')
+pn.state.schedule_task('task', clear_caches, cron='2 5 * * *')
+pn.state.schedule_task('task', warm_cache, cron='15 5 * * *')
 
 # selection widgets
 xaxis_widget = pn.widgets.Select(name="X-axis Stat", value='Goals Per Game', options=get_stat_names())

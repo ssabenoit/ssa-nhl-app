@@ -4,7 +4,7 @@ warm_cache.py
 setup script to pre load every input combination to the panel cache
 """
 import panel as pn
-from dashboard_utils.dashboard_utils import *
+from panel_dashboard import get_reg_season_stats, get_stat_leaders, get_stat_names, get_x_table, get_y_table, bars_with_icons, main_scatter
 
 # Function that will be cached for dashboard use
 # @cache
@@ -55,4 +55,5 @@ def warm_cache():
                     main_scatter(stat, second_stat, season)
 
 
-# warm_cache()
+if __name__ == "__main__":
+    warm_cache()
