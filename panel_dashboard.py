@@ -240,8 +240,13 @@ def warm_cache():
     # all possible inputs
     seasons = ["20242025", "20232024"]  
     stats = get_stat_names() # gets stat names, also warms that cache
-    formatted_stats = [stat.replace(' ', '_').upper() for stat in stats]
     
+
+    selected_stats = ['Goals Against', 'Goals Against Average', 'Pim Per Game', 
+                      'Goals', 'Goals Per Game', 'Pp Goals', 'Shots Per Game', 'Hits Per Game']
+    formatted_stats = [stat.replace(' ', '_').upper() for stat in selected_stats]
+
+
     asc_stats = ['Goals Against', 'Goals Against Average', 'Pim', 'Pim Per Game', 'Giveaways', 'Giveaways Per Game']
     asc_stats = [stat.replace(' ', '_').upper() for stat in asc_stats]
    
@@ -270,6 +275,7 @@ def warm_cache():
 
                 if second_stat != stat:
                     main_scatter(stat, second_stat, season)
+    print('Cache Loaded')
 
 # enabling panel extensions
 pn.extension(sizing_mode="stretch_width") # design="material"
