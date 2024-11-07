@@ -6,3 +6,4 @@ pillow
 snowflake-connector-python
 plotly
 app
+croniter
