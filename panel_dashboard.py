@@ -66,32 +66,27 @@ def main_scatter(x_stat=None, y_stat=None, season=None):
 
     # add the logo for each team over its corresponding data point
     for idx, row in reg_stats.iterrows():
-    
-        if row['LOGO_URL'] is not None:
-            # retrieve the image bytes
-            img = requests.get(row['LOGO_URL'])
+        
+        # pull the webp image file for the current team
+        img = Image.open(f'logos/{row['TEAM_ABV']}.webp')
 
-            # convert the image response to a png if it is not
-            if img.headers['Content-Type'] == 'image/svg+xml':
-                img = cairosvg.svg2png(img.content)
-
-            # add the image on top of the points
-            fig.add_layout_image(
-                x=row[x_stat_col],
-                y=row[y_stat_col],
-                source=Image.open(BytesIO(img)),
-                xref="x",
-                yref="y",
-                sizex=img_width,
-                sizey=img_height,
-                sizing='contain',
-                xanchor="center",
-                yanchor="middle",
-            )
+        # add the image on top of the team's data point
+        fig.add_layout_image(
+            x=row[x_stat_col],
+            y=row[y_stat_col],
+            source=img,
+            xref="x",
+            yref="y",
+            sizex=img_width,
+            sizey=img_height,
+            sizing='contain',
+            xanchor="center",
+            yanchor="middle",
+        )
     
-    fig.update_layout(
-        height=800
-    )
+    # fig.update_layout(
+    #     height= 650
+    # )
     
     return fig
 
@@ -110,6 +105,7 @@ def bars_with_icons(stat='GOALS', sort_desc=True, season=None):
 
     # get the stat leaders
     reg_stats = get_stat_leaders(stat=stat, season=season_val, order=order)
+    print(reg_stats)
 
     # pull in each teams color
     colors = pd.read_csv('teams.csv')
@@ -118,7 +114,8 @@ def bars_with_icons(stat='GOALS', sort_desc=True, season=None):
     # keep the 7 leaders and correctly sort the df
     # reg_stats = reg_stats.sort_values(by=[stat], ascending = not sort_desc).head(7).sort_values(by=[stat], ascending=sort_desc)
     reg_stats = reg_stats.head(7).sort_values(by=[stat], ascending=sort_desc)
-    val = int(reg_stats[stat].max() * 0.15)
+    val = int(reg_stats[stat].max() * 0.1)
+    print(reg_stats)
 
     # fig = px.scatter(reg_stats, x=x_stat, y=y_stat, hover_name='TEAM_ABV')
     fig = px.bar(reg_stats, y='TEAM_ABV', x=stat, orientation='h', opacity=0.2, color='color_hex',
@@ -293,34 +290,37 @@ main_plot = pn.bind(
     y_stat=yaxis_widget, 
     season=season_widget
 )
-plot_pane = pn.pane.Plotly(main_plot, sizing_mode='stretch_width')
+plot_pane = pn.pane.Plotly(main_plot, sizing_mode='stretch_both')
 
 # Goals for and against leaders
-goals_plot = pn.bind(bars_with_icons, season=season_widget, stat='GOALS', sort_desc=True)
-goals_against_plot = pn.bind(bars_with_icons, season=season_widget, stat='GOALS_AGAINST', sort_desc=False)
-goals_pane = pn.pane.Plotly(goals_plot, sizing_mode='stretch_width')
-goals_against_pane = pn.pane.Plotly(goals_against_plot, sizing_mode='stretch_width')
+# goals_plot = pn.bind(bars_with_icons, stat='GOALS', sort_desc=True, season=season_widget)
+# goals_against_plot = pn.bind(bars_with_icons, stat='GOALS_AGAINST', sort_desc=False, season=season_widget)
+# goals_pane = pn.pane.Plotly(goals_plot, sizing_mode='stretch_width')
+# goals_against_pane = pn.pane.Plotly(goals_against_plot, sizing_mode='stretch_width')
 
 # stat leaders table widgets
 x_stat_table = pn.bind(get_x_table, x_stat=xaxis_widget, season=season_widget)
 y_stat_table = pn.bind(get_y_table, y_stat=yaxis_widget, season=season_widget)
 x_stat_pane = pn.pane.DataFrame(x_stat_table, index=True, max_rows=10)
 y_stat_pane = pn.pane.DataFrame(y_stat_table, index=True, max_rows=10)
-stats_tables = pn.Column(x_stat_pane, y_stat_pane, width=250)
+stats_tables = pn.Column(x_stat_pane, y_stat_pane, width=200)
 
 # organize the dashboard with a template and serve it to the server
 pn.template.MaterialTemplate(
     site="SSA",
     header_background='#305B5B',
     title="NHL Dynamic Stat Comparisons",
-    sidebar=[xaxis_widget, yaxis_widget, season_widget],
-    main=[pn.Column(pn.Row(plot_pane, stats_tables), pn.Row(goals_pane, goals_against_pane))],
+    # sidebar=[xaxis_widget, yaxis_widget, season_widget],
+    main=[pn.Column(pn.Row(xaxis_widget, yaxis_widget, season_widget), pn.Row(plot_pane, stats_tables))], # , pn.Row(goals_pane, goals_against_pane)
 ).servable()
 
 # run command
 # panel serve panel_dashboard.py --autoreload
 
 #################### OLD DASHBOARD LAYOUT #####################
+
+# for Procfile
+# release: python warm_cache.py
 
 # organizing the dashboard
 # widgets = pn.Column(xaxis_widget, yaxis_widget, sizing_mode="fixed", width=300)
