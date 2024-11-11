@@ -85,7 +85,7 @@ def main_scatter(x_stat=None, y_stat=None, season=None):
         )
     
     fig.update_layout(
-        height= 650
+        height= 900
     )
     
     return fig
