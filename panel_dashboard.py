@@ -84,9 +84,9 @@ def main_scatter(x_stat=None, y_stat=None, season=None):
             yanchor="middle",
         )
     
-    # fig.update_layout(
-    #     height= 650
-    # )
+    fig.update_layout(
+        height= 650
+    )
     
     return fig
 
@@ -105,7 +105,7 @@ def bars_with_icons(stat='GOALS', sort_desc=True, season=None):
 
     # get the stat leaders
     reg_stats = get_stat_leaders(stat=stat, season=season_val, order=order)
-    print(reg_stats)
+    # print(reg_stats)
 
     # pull in each teams color
     colors = pd.read_csv('teams.csv')
@@ -115,7 +115,7 @@ def bars_with_icons(stat='GOALS', sort_desc=True, season=None):
     # reg_stats = reg_stats.sort_values(by=[stat], ascending = not sort_desc).head(7).sort_values(by=[stat], ascending=sort_desc)
     reg_stats = reg_stats.head(7).sort_values(by=[stat], ascending=sort_desc)
     val = int(reg_stats[stat].max() * 0.1)
-    print(reg_stats)
+    # print(reg_stats)
 
     # fig = px.scatter(reg_stats, x=x_stat, y=y_stat, hover_name='TEAM_ABV')
     fig = px.bar(reg_stats, y='TEAM_ABV', x=stat, orientation='h', opacity=0.2, color='color_hex',
