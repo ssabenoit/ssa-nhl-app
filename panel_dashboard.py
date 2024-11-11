@@ -85,7 +85,7 @@ def main_scatter(x_stat=None, y_stat=None, season=None):
         )
     
     fig.update_layout(
-        height= 900
+        height= 800
     )
     
     return fig
@@ -290,7 +290,7 @@ main_plot = pn.bind(
     y_stat=yaxis_widget, 
     season=season_widget
 )
-plot_pane = pn.pane.Plotly(main_plot, sizing_mode='stretch_both')
+plot_pane = pn.pane.Plotly(main_plot, sizing_mode='stretch_width')
 
 # Goals for and against leaders
 # goals_plot = pn.bind(bars_with_icons, stat='GOALS', sort_desc=True, season=season_widget)
