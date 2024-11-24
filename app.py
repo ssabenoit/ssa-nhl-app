@@ -83,6 +83,41 @@ class nhl_snowflake():
         cur.execute(f"select TEAM_ABV, LOGO_URL, {stat} from TEAM_SEASON_STATS_REGULAR where season = {season} order by {stat} {order}")
         df = pd.DataFrame(cur.fetchall(), columns=[desc[0] for desc in cur.description])
 
+        cur.close()
+        return df
+    
+    def get_plays(self, game='2023020001', play_type=None, team=None, season='20232024'):
+
+        # format the query
+        # get the team (or whole league) occurence of certain plays over a certain season
+        if team is not None:
+            if team == 'all':
+                query = f"select * from ALL_PLAYS where season = {season}"
+            else:
+                query = f"select * from ALL_PLAYS where play_team_abv = {team} and season = {season}"
+                # (away_abv = '{team}' or home_abv = '{team}')
+            
+            # if play_type is not None and type(play_type) == str:
+            #     query += f" and description = '{play_type}'"
+            # else:
+            #     query += f" and description in {play_type}"
+            #     print(query)
+
+        # select the plays for a given game
+        else:
+            query = f"select * from ALL_PLAYS where id = {game}"
+
+        # add the play type filtering to the query (if applicable)
+        if play_type is not None and type(play_type) == str:
+            query += f" and description = '{play_type}'"
+        else:
+            query += f" and description in {play_type}"
+            print(query)
+        
+        # create a cursor and retreive the plays
+        cur  = self.conn.cursor()
+        cur.execute(query)
+        df = pd.DataFrame(cur.fetchall(), columns=[desc[0] for desc in cur.description])
         return df
 
     def __del__(self):
