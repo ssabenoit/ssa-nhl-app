@@ -84,9 +84,9 @@ def main_scatter(x_stat=None, y_stat=None, season=None):
             yanchor="middle",
         )
     
-    fig.update_layout(
-        height= 800
-    )
+    # fig.update_layout(
+    #     height= 800
+    # )
     
     return fig
 
@@ -275,7 +275,27 @@ def warm_cache():
     print('Cache Loaded')
 
 # enabling panel extensions
-pn.extension(sizing_mode="stretch_width") # design="material"
+pn.extension(sizing_mode="stretch_width", raw_css=[
+    """
+    .flex-item-1 {
+        flex: 1 1 calc(80% - 10px);
+        aspect-ratio: 16 / 9;
+        min-width: 400px;
+        box-sizing: border-box;
+    }
+    .flex-item-2 {
+        flex: 0 1 auto;
+        max-width: 200px;
+        min-width: 150px;
+        box-sizing: border-box;
+    }
+    @media (max-width: 600px) {
+        .flex-item-1, .flex-item-2 {
+            flex: 1 1 100%;
+        }
+    }
+    """
+]) # design="material"
 pn.extension('plotly')
 
 # selection widgets
@@ -290,7 +310,7 @@ main_plot = pn.bind(
     y_stat=yaxis_widget, 
     season=season_widget
 )
-plot_pane = pn.pane.Plotly(main_plot, sizing_mode='stretch_width')
+plot_pane = pn.pane.Plotly(main_plot, sizing_mode='stretch_both')
 
 # Goals for and against leaders
 # goals_plot = pn.bind(bars_with_icons, stat='GOALS', sort_desc=True, season=season_widget)
@@ -303,7 +323,7 @@ x_stat_table = pn.bind(get_x_table, x_stat=xaxis_widget, season=season_widget)
 y_stat_table = pn.bind(get_y_table, y_stat=yaxis_widget, season=season_widget)
 x_stat_pane = pn.pane.DataFrame(x_stat_table, index=True, max_rows=10)
 y_stat_pane = pn.pane.DataFrame(y_stat_table, index=True, max_rows=10)
-stats_tables = pn.Column(x_stat_pane, y_stat_pane, width=200)
+stats_tables = pn.Column(x_stat_pane, y_stat_pane, css_classes=["flex-item-2"]) # , width=200
 
 # organize the dashboard with a template and serve it to the server
 pn.template.MaterialTemplate(
@@ -311,7 +331,13 @@ pn.template.MaterialTemplate(
     header_background='#305B5B',
     title="NHL Dynamic Stat Comparisons",
     # sidebar=[xaxis_widget, yaxis_widget, season_widget],
-    main=[pn.Column(pn.Row(xaxis_widget, yaxis_widget, season_widget), pn.Row(plot_pane, stats_tables))], # , pn.Row(goals_pane, goals_against_pane)
+    main=[pn.Column(
+        pn.Row(xaxis_widget, yaxis_widget, season_widget), 
+        pn.FlexBox(
+            pn.Column(plot_pane, css_classes=["flex-item-1"]), 
+            stats_tables, 
+            flex_direction='row', flex_wrap='wrap', gap='10px')
+    )], # , pn.Row(goals_pane, goals_against_pane)
 ).servable()
 
 # run command
