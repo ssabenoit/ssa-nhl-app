@@ -11,6 +11,7 @@ import requests
 import cairosvg
 from PIL import Image
 from io import BytesIO
+import datetime as dt
 
 
 class nhl_snowflake():
@@ -88,13 +89,15 @@ class nhl_snowflake():
     
     def get_plays(self, game='2023020001', play_type=None, team=None, season='20232024'):
 
-        # format the query
+        # play_types to ignore
+        ignore_plays = ('period-start', 'period-end', 'faceoff', 'game-end')
+
         # get the team (or whole league) occurence of certain plays over a certain season
         if team is not None:
             if team == 'all':
                 query = f"select * from ALL_PLAYS where season = {season}"
             else:
-                query = f"select * from ALL_PLAYS where play_team_abv = {team} and season = {season}"
+                query = f"select * from ALL_PLAYS where play_team_abv = '{team}' and season = {season} and description not in {ignore_plays}"
                 # (away_abv = '{team}' or home_abv = '{team}')
             
             # if play_type is not None and type(play_type) == str:
@@ -105,19 +108,48 @@ class nhl_snowflake():
 
         # select the plays for a given game
         else:
-            query = f"select * from ALL_PLAYS where id = {game}"
+            query = f"select * from ALL_PLAYS where id = {game} and description not in {ignore_plays}"
+        # print(query)
 
         # add the play type filtering to the query (if applicable)
-        if play_type is not None and type(play_type) == str:
-            query += f" and description = '{play_type}'"
-        else:
-            query += f" and description in {play_type}"
-            print(query)
+        # if play_type is not None and type(play_type) == str:
+        #     query += f" and description = '{play_type}'"
+        # else:
+        #     query += f" and description in {play_type}"
+        #     print(query)
         
         # create a cursor and retreive the plays
         cur  = self.conn.cursor()
         cur.execute(query)
         df = pd.DataFrame(cur.fetchall(), columns=[desc[0] for desc in cur.description])
+        cur.close()
+        return df
+
+    def get_games(self, date):
+
+        if date is None: date = dt.datetime.now()
+        print(date)
+
+        query = f"select distinct id from INT__ALL_GAMES where date = '{date}'"
+        print(query)
+
+        # create a cursor and retreive the plays
+        cur  = self.conn.cursor()
+        cur.execute(query)
+        df = pd.DataFrame(cur.fetchall(), columns=[desc[0] for desc in cur.description])
+        cur.close()
+        return df['ID'].to_list()
+
+    def get_game_box_score(self, game='2023020001'):
+        
+        # format the query to get every row of the bs for the given game
+        query = f'select * from skaters_per_game_stats_all where game_id = {game} order by goals desc, shots desc'
+        
+        # create a cursor and retreive the plays
+        cur  = self.conn.cursor()
+        cur.execute(query)
+        df = pd.DataFrame(cur.fetchall(), columns=[desc[0] for desc in cur.description])
+        cur.close()
         return df
 
     def __del__(self):
@@ -128,5 +160,6 @@ class nhl_snowflake():
 
 
 # test_app = nhl_snowflake()
+# print(test_app.get_game_box_score())
 # print(test_app.get_reg_season_stats(season='20242025'))
 # test_app.scarpe_logos()

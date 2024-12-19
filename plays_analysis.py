@@ -11,6 +11,7 @@ from PIL import Image
 import requests
 import cairosvg
 from io import BytesIO
+pd.set_option("display.max_columns", None)
 
 # custom color scale for rink heat maps
 color_scale = [
@@ -67,7 +68,7 @@ def visualize_rink():
     print(faceoffs)
 
     fig = px.scatter(faceoffs, x='X_POS', y='Y_POS', color='DESCRIPTION')
-    rink = Image.open('rink_6.png')
+    rink = Image.open('rinks/rink_6.png')
     
     # img = requests.get("https://secure.espncdn.com/redesign/assets/img/nhl/bg-rink.svg")
     # print(img)
@@ -94,6 +95,78 @@ def visualize_rink():
     fig.update_yaxes(range=[-42.5, 42.5])
 
     fig.show()
+    # return fig
+
+def visualize_single_game(game=2024020001):
+
+    # get the plays for the given game
+    app = nhl_snowflake()
+    plays = app.get_plays(game=game) # play_type='faceoff'
+    # print(plays.columns)
+    # print(plays)
+
+    # filter all types of shots and goals only
+    desried_plays = ['shot-on-goal', 'blocked-shot', 'missed-shot', 'goal']
+    plays = plays[plays['DESCRIPTION'].isin(desried_plays)]
+
+    # adjust x and y positions based on offense zone side (for a half rink, with goal on the right)
+    half_x, half_y = [], []
+    for idx, row in plays.iterrows():
+        if row['HOME_ABV'] == row['PLAY_TEAM_ABV'] and row['HOME_SIDE'] == 'right':
+            half_x.append(-1 * row['X_POS'])
+            half_y.append(-1 * row['Y_POS'])
+        elif row['AWAY_ABV'] == row['PLAY_TEAM_ABV'] and row['HOME_SIDE'] == 'left':
+            half_x.append(-1 * row['X_POS'])
+            half_y.append(-1 * row['Y_POS'])
+        else:
+            half_x.append(row['X_POS'])
+            half_y.append(row['Y_POS'])
+    plays['x_half'] = half_x
+    plays['y_half'] = half_y
+
+    # generate the shot chart
+    fig = px.scatter(plays, x='x_half', y='y_half', symbol='DESCRIPTION', color='PLAY_TEAM_ABV')
+    rink = Image.open('rinks/rink_6.png')
+
+    ### format the legend
+    # only keep the colored circles for each team
+    for i, trace in enumerate(fig.data):
+        name = trace.name.split(',')
+        if name[1] != ' shot-on-goal':
+            trace['name'] = ''
+            trace['showlegend']=False
+        else:
+            trace['name'] = name[0]
+    
+    # add in the symbols to the legend
+    symbols = ['circle', 'square', 'diamond', 'x']
+    for play, tick in zip(desried_plays, symbols):
+        play = play.replace('-', ' ').title()
+
+        fig.add_trace(go.Scatter(
+            y=[None], mode='markers', marker=dict(size=5, symbol=tick, color='black'), name=play,
+        ))
+
+    # generate format the final rink
+    fig.add_layout_image(
+        x=0,
+        y=0,
+        source=rink,
+        xref="x",
+        yref="y",
+        sizex=200,
+        sizey=85,
+        sizing='stretch',
+        xanchor="center",
+        yanchor="middle",
+        layer='below'
+    )
+    fig.update_xaxes(range=[0, 100], showgrid=False, zeroline=False, showticklabels=False, title='')
+    fig.update_yaxes(range=[-42.5, 42.5], showgrid=False, zeroline=False, showticklabels=False, title='')
+    fig.update_layout(legend=dict(title='Shots Legend'))
+
+    # fig.show()
+    return fig
 
 def full_rink_heatmap(team='NSH'):
 
@@ -121,7 +194,7 @@ def full_rink_heatmap(team='NSH'):
     fig.update_xaxes(range=[-100, 100])
     fig.update_yaxes(range=[-42.5, 42.5])
 
-    fig.show()
+    return fig
 
 def half_rink_heatmap(team='NSH'):
 
@@ -173,7 +246,8 @@ def half_rink_heatmap(team='NSH'):
     fig.update_xaxes(range=[0, 100])
     fig.update_yaxes(range=[-42.5, 42.5])
 
-    fig.show()
+    # fig.show()
+    return fig
 
 def half_rink_heatmap_smooth(team='NSH'):
 
@@ -216,7 +290,7 @@ def half_rink_heatmap_smooth(team='NSH'):
     )
 
     # format the rink and figure size
-    rink = Image.open('rink_6.png')
+    rink = Image.open('rinks/rink_6.png')
     fig.add_layout_image(
         x=0,
         y=0,
@@ -238,6 +312,7 @@ def half_rink_heatmap_smooth(team='NSH'):
     )
 
     fig.show()
+    return fig
 
-# visualize_rink()
-half_rink_heatmap_smooth(team='all')
+# visualize_single_game()
+half_rink_heatmap_smooth()
