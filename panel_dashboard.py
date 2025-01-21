@@ -357,14 +357,11 @@ custom_css = """
         }
     }
 """
-old_old="""
-.flex-container-2 {
-            flex-direction: row;
-        }
-"""
-# ]) # design="material"
+
+# panel configurations
 pn.config.raw_css.append(custom_css)
 pn.extension('plotly')
+pn.extension(design="material")
 
 # selection widgets
 xaxis_widget = pn.widgets.Select(name="X-axis Stat", value='Goals Per Game', options=get_stat_names(), css_classes=["flex-item"])
@@ -386,44 +383,31 @@ plot_pane = pn.pane.Plotly(main_plot, sizing_mode='stretch_both', css_classes=["
 # goals_pane = pn.pane.Plotly(goals_plot, sizing_mode='stretch_width')
 # goals_against_pane = pn.pane.Plotly(goals_against_plot, sizing_mode='stretch_width')
 
-# stat leaders table widgets
+# stat leaders table widgets -- side by side for small screens, stacked for big screens
 x_stat_table = pn.bind(get_x_table, x_stat=xaxis_widget, season=season_widget)
 y_stat_table = pn.bind(get_y_table, y_stat=yaxis_widget, season=season_widget)
 x_stat_pane = pn.pane.DataFrame(x_stat_table, index=True, max_rows=10, css_classes=["flex-item-2"])
 y_stat_pane = pn.pane.DataFrame(y_stat_table, index=True, max_rows=10, css_classes=["flex-item-2"])
 stats_tables = pn.Column(x_stat_pane, y_stat_pane, css_classes=["flex-container-2"]) # , width=200
-# organize the dashboard with a template and serve it to the server
-pn.template.MaterialTemplate(
-    site="SSA",
-    header_background='#305B5B',
-    title="NHL Dynamic Stat Comparisons",
-    # sidebar=[xaxis_widget, yaxis_widget, season_widget],
-    main=[pn.Column(
-        pn.Row(xaxis_widget, yaxis_widget, season_widget, css_classes=['flex-container']), 
-        pn.Row(
-            plot_pane, 
-            stats_tables, 
-            # flex_direction='row', flex_wrap='wrap', gap='10px',
-            css_classes=['flex-container'])
-    )]
-).servable()
 
-# , pn.Row(goals_pane, goals_against_pane)
+# stack the filters and main dashboard flexboxes as servable application
+pn.Column(
+    pn.Row(xaxis_widget, yaxis_widget, season_widget, css_classes=['flex-container']), 
+    pn.Row(plot_pane, stats_tables, css_classes=['flex-container'])
+).servable()
 
 # run command
 # panel serve panel_dashboard.py --autoreload
 
-#################### OLD DASHBOARD LAYOUT #####################
-
-# for Procfile
-# release: python warm_cache.py
-
-# organizing the dashboard
-# widgets = pn.Column(xaxis_widget, yaxis_widget, sizing_mode="fixed", width=300)
-# pn.Column(widgets, plot_pane)
-
-# app = pn.Column(
-#     pn.Row(xaxis_widget, yaxis_widget), 
-#     plot_pane
-# )
-# app.servable()
+######### Themed layout (with Header) ##########
+# organize the dashboard with a template and serve it to the server
+# pn.template.MaterialTemplate(
+    # site="SSA",
+    # header_background='#305B5B',
+    # title="NHL Dynamic Stat Comparisons",
+    # sidebar=[xaxis_widget, yaxis_widget, season_widget],
+    # main = [pn.Column(
+    #     pn.Row(xaxis_widget, yaxis_widget, season_widget, css_classes=['flex-container']), 
+    #     pn.Row(plot_pane, stats_tables, css_classes=['flex-container'])
+    # )]
+# ).servable()
