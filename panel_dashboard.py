@@ -275,8 +275,8 @@ def warm_cache():
     print('Cache Loaded')
 
 # enabling panel extensions
-pn.extension(sizing_mode="stretch_width", raw_css=[
-    """
+# pn.extension(sizing_mode="stretch_width")
+old_css= """
     .flex-item-1 {
         flex: 1 1 calc(80% - 10px);
         aspect-ratio: 16 / 9;
@@ -294,14 +294,82 @@ pn.extension(sizing_mode="stretch_width", raw_css=[
             flex: 1 1 100%;
         }
     }
-    """
-]) # design="material"
+"""
+custom_css = """
+    /* set the flex container style for main row or column */
+    .flex-container {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 10px;
+    }
+
+    /* flex container style for stat tables*/
+    .flex-container-2 {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 10px;
+    }
+
+    /* Styling for individual flex box item components */
+    .flex-item {
+        min-width: 200px;
+        box-sizing: border-box;
+    }
+
+    .flex-item-2 {
+        flex: 1 1 auto;
+        min-width: 150px;
+        box-sizing: border-box;
+    }
+
+    /* set flex directions for large screens */
+    @media (min-width: 768px) {
+        /* set main container as a row and stat table container as a column */
+        .flex-container {
+            flex-direction: row;
+        }
+        .flex-item {
+            flex: 1 1 auto;
+        }
+        .flex-item-2 {
+            max-width: 250px;
+        }
+        .flex-container-2 {
+            flex-direction: column;
+        }
+    }
+
+    /* set flex box layout to column for small screens */
+    @media (max-width: 767px) {
+        /* set main container as a column and stat table container as a row */
+        .flex-container {
+            flex-direction: column;
+        }
+        .flex-item {
+            flex: 1 0 auto;
+        }
+        .flex-item-2 {
+            max-width: 350px;
+        }
+        .flex-container-2 {
+            flex-direction: row;
+            align-items: stretch;
+        }
+    }
+"""
+old_old="""
+.flex-container-2 {
+            flex-direction: row;
+        }
+"""
+# ]) # design="material"
+pn.config.raw_css.append(custom_css)
 pn.extension('plotly')
 
 # selection widgets
-xaxis_widget = pn.widgets.Select(name="X-axis Stat", value='Goals Per Game', options=get_stat_names())
-yaxis_widget = pn.widgets.Select(name="Y-axis Stat", value='Goals Against Average', options=get_stat_names())
-season_widget = pn.widgets.Select(name="Season", value='2024-2025', options=['2024-2025', '2023-2024'])
+xaxis_widget = pn.widgets.Select(name="X-axis Stat", value='Goals Per Game', options=get_stat_names(), css_classes=["flex-item"])
+yaxis_widget = pn.widgets.Select(name="Y-axis Stat", value='Goals Against Average', options=get_stat_names(), css_classes=["flex-item"])
+season_widget = pn.widgets.Select(name="Season", value='2024-2025', options=['2024-2025', '2023-2024'], css_classes=["flex-item"])
 
 # main scatter plot widget
 main_plot = pn.bind(
@@ -310,7 +378,7 @@ main_plot = pn.bind(
     y_stat=yaxis_widget, 
     season=season_widget
 )
-plot_pane = pn.pane.Plotly(main_plot, sizing_mode='stretch_both')
+plot_pane = pn.pane.Plotly(main_plot, sizing_mode='stretch_both', css_classes=["flex-item"]) # 
 
 # Goals for and against leaders
 # goals_plot = pn.bind(bars_with_icons, stat='GOALS', sort_desc=True, season=season_widget)
@@ -321,10 +389,9 @@ plot_pane = pn.pane.Plotly(main_plot, sizing_mode='stretch_both')
 # stat leaders table widgets
 x_stat_table = pn.bind(get_x_table, x_stat=xaxis_widget, season=season_widget)
 y_stat_table = pn.bind(get_y_table, y_stat=yaxis_widget, season=season_widget)
-x_stat_pane = pn.pane.DataFrame(x_stat_table, index=True, max_rows=10)
-y_stat_pane = pn.pane.DataFrame(y_stat_table, index=True, max_rows=10)
-stats_tables = pn.Column(x_stat_pane, y_stat_pane, css_classes=["flex-item-2"]) # , width=200
-
+x_stat_pane = pn.pane.DataFrame(x_stat_table, index=True, max_rows=10, css_classes=["flex-item-2"])
+y_stat_pane = pn.pane.DataFrame(y_stat_table, index=True, max_rows=10, css_classes=["flex-item-2"])
+stats_tables = pn.Column(x_stat_pane, y_stat_pane, css_classes=["flex-container-2"]) # , width=200
 # organize the dashboard with a template and serve it to the server
 pn.template.MaterialTemplate(
     site="SSA",
@@ -332,13 +399,16 @@ pn.template.MaterialTemplate(
     title="NHL Dynamic Stat Comparisons",
     # sidebar=[xaxis_widget, yaxis_widget, season_widget],
     main=[pn.Column(
-        pn.Row(xaxis_widget, yaxis_widget, season_widget), 
-        pn.FlexBox(
-            pn.Column(plot_pane, css_classes=["flex-item-1"]), 
+        pn.Row(xaxis_widget, yaxis_widget, season_widget, css_classes=['flex-container']), 
+        pn.Row(
+            plot_pane, 
             stats_tables, 
-            flex_direction='row', flex_wrap='wrap', gap='10px')
-    )], # , pn.Row(goals_pane, goals_against_pane)
+            # flex_direction='row', flex_wrap='wrap', gap='10px',
+            css_classes=['flex-container'])
+    )]
 ).servable()
+
+# , pn.Row(goals_pane, goals_against_pane)
 
 # run command
 # panel serve panel_dashboard.py --autoreload
