@@ -90,7 +90,7 @@ class nhl_snowflake():
     def get_plays(self, game='2023020001', play_type=None, team=None, season='20232024'):
 
         # play_types to ignore
-        ignore_plays = ('period-start', 'period-end', 'faceoff', 'game-end')
+        ignore_plays = ('period-start', 'period-end', 'game-end', 'faceoff')
 
         # get the team (or whole league) occurence of certain plays over a certain season
         if team is not None:
@@ -128,17 +128,23 @@ class nhl_snowflake():
     def get_games(self, date):
 
         if date is None: date = dt.datetime.now()
-        print(date)
+        # print(date)
 
-        query = f"select distinct id from INT__ALL_GAMES where date = '{date}'"
-        print(query)
+        query = f"select distinct id, home_abv, away_abv from INT__ALL_GAMES where date = '{date}'"
+        # print(query)
 
         # create a cursor and retreive the plays
         cur  = self.conn.cursor()
         cur.execute(query)
         df = pd.DataFrame(cur.fetchall(), columns=[desc[0] for desc in cur.description])
         cur.close()
-        return df['ID'].to_list()
+
+        # create game identifier strings
+        df['spacer'] = [' @ ' for _ in range(len(df))]
+        df['game'] = df['AWAY_ABV'] + df['spacer'] + df['HOME_ABV']
+
+        # return the game ids and identifier strings
+        return df['ID'].to_list(), df['game'].to_list()
 
     def get_game_box_score(self, game='2023020001'):
         
@@ -151,6 +157,19 @@ class nhl_snowflake():
         df = pd.DataFrame(cur.fetchall(), columns=[desc[0] for desc in cur.description])
         cur.close()
         return df
+
+    def get_game_dates(self):
+        """ retrieves the full list of days in which there is at least one game being played """
+        
+        query = f"select distinct date from INT__ALL_GAMES order by date desc"
+
+        # create a cursor and retreive the plays
+        cur  = self.conn.cursor()
+        cur.execute(query)
+        df = pd.DataFrame(cur.fetchall(), columns=[desc[0] for desc in cur.description])
+        cur.close()
+        
+        return df['DATE'].to_list()
 
     def __del__(self):
         # close the snowflake connection

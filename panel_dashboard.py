@@ -26,16 +26,35 @@ def get_reg_season_stats(season='20242025'):
     app = nhl_snowflake()
     reg_stats = app.get_reg_season_stats(season=season)
 
+    print(f'{season} cache loaded')
+
     return reg_stats
 
 @pn.cache
 def get_stat_leaders(stat, season, order):
 
     # connect to the db and retrieve the stat leaders
-    app = nhl_snowflake()
-    stat_leaders = app.get_stat_leaders(stat=stat, season=season, order=order)
+    # app = nhl_snowflake()
+    # stat_leaders = app.get_stat_leaders(stat=stat, season=season, order=order)
+    # print(stat_leaders)
 
-    return stat_leaders
+    # use the cached df to get the stat leaders
+    reg_stats = get_reg_season_stats(season=season)
+
+    if order == 'asc': order_bool = True
+    else: order_bool = False
+
+    sorted_stats = reg_stats.sort_values(by=[stat], ascending=order_bool).reset_index()
+    sorted_stats = sorted_stats[['TEAM_ABV', 'LOGO_URL', stat]]
+    
+    # print(stat_leaders.head())
+    # print(sorted_stats.head())
+    print('stat leaders cached')
+
+    return sorted_stats
+
+# pn.state.as_cached('data_20242025', get_reg_season_stats, '20242025')
+# pn.state.as_cached('data_20232024', get_reg_season_stats, '20232024')
 
 @pn.cache
 def main_scatter(x_stat=None, y_stat=None, season=None):
@@ -54,6 +73,8 @@ def main_scatter(x_stat=None, y_stat=None, season=None):
     # app = nhl_snowflake()
     # reg_stats = app.get_reg_season_stats(season=season_val)
     reg_stats = get_reg_season_stats(season=season_val)
+    
+    # reg_stats = pn.state.as_cached(f'data_{season}', get_reg_season_stats, season)
 
     fig = px.scatter(reg_stats, x=x_stat_col, y=y_stat_col, hover_name='TEAM_ABV',
                      labels={x_stat_col: x_stat, y_stat_col: y_stat}, template="simple_white")

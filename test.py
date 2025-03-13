@@ -6,6 +6,8 @@ from PIL import Image
 from io import BytesIO
 import requests
 import cairosvg
+import panel as pn
+import datetime as dt
 
 
 def get_stat_leaders(stat, season, order):
@@ -113,9 +115,14 @@ def bars_with_icons(stat='GOALS', sort_desc=True, season='20232024'):
 #     if team in ['UTA']:
     
 # image = Image.open(f'logos/{team}.png')
-image = requests.get(f'https://assets.nhle.com/logos/nhl/svg/UTA_light.svg')
-image = cairosvg.svg2png(image.content)
-image = Image.open(BytesIO(image))
-# image = image.convert('RGB')
-image.save(f'logos/UTA.webp', 'webp', lossless=True)
+# image = requests.get(f'https://assets.nhle.com/logos/nhl/svg/UTA_light.svg')
+# image = cairosvg.svg2png(image.content)
+# image = Image.open(BytesIO(image))
+# # image = image.convert('RGB')
+# image.save(f'logos/UTA.webp', 'webp', lossless=True)
 
+# List all themes in the panel.theme module
+# themes = [attr for attr in dir(pn.theme) if not attr.startswith("_")]
+# print(themes)
+
+print(dt.datetime.now() - dt.timedelta(days=1))
