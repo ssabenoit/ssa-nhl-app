@@ -343,7 +343,7 @@ boxscore_pane = pn.pane.DataFrame(boxscore, index=False, max_rows=None, justify=
 # serve the simple app (no header)
 pn.Column(
     filters_row, 
-    pn.Row(plot_pane), 
+    plot_pane,
     pn.Row(boxscore_pane, align="center"),
     align="center"
 ).servable()
