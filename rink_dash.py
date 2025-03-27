@@ -205,7 +205,7 @@ def visualize_single_game(game):
         tickmode='array', tickvals=[-50, 50], ticktext=['AWAY', 'HOME']
     )
     fig.update_yaxes(range=[-42.5, 42.5], showgrid=False, zeroline=False, showticklabels=False, title='')
-    fig.update_layout(legend=dict(title='Shots Legend'), height=650)
+    fig.update_layout(legend=dict(title='Shots Legend'), height=650, margin=dict(l=0, t=10, autoexpand=True))
 
     # fig.show()
     return fig
