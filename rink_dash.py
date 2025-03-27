@@ -205,7 +205,7 @@ def visualize_single_game(game):
         tickmode='array', tickvals=[-50, 50], ticktext=['AWAY', 'HOME']
     )
     fig.update_yaxes(range=[-42.5, 42.5], showgrid=False, zeroline=False, showticklabels=False, title='')
-    fig.update_layout(legend=dict(title='Shots Legend'), height=650 , margin=dict(autoexpand=True))
+    fig.update_layout(legend=dict(title='Shots Legend'), height=650, margin=dict(l=10, r=200))
 
     # fig.show()
     return fig
@@ -325,7 +325,7 @@ main_plot = pn.bind(
     visualize_single_game, 
     game=game_selector
 )
-plot_pane = pn.pane.Plotly(main_plot, sizing_mode="stretch_width", max_width=1150, align="center") # , css_classes=['df-container'])
+plot_pane = pn.pane.Plotly(main_plot, sizing_mode="stretch_width", align="center") # , css_classes=['df-container'])
 
 
 # dataframe widgets for the boxscore
@@ -343,7 +343,7 @@ boxscore_pane = pn.pane.DataFrame(boxscore, index=False, max_rows=None, justify=
 # serve the simple app (no header)
 pn.Column(
     filters_row, 
-    pn.Row(plot_pane, sizing_mode='stretch_width'), 
+    pn.Row(plot_pane), 
     pn.Row(boxscore_pane, align="center"),
     align="center"
 ).servable()
