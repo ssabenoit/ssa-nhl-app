@@ -205,7 +205,7 @@ def visualize_single_game(game):
         tickmode='array', tickvals=[-50, 50], ticktext=['AWAY', 'HOME']
     )
     fig.update_yaxes(range=[-42.5, 42.5], showgrid=False, zeroline=False, showticklabels=False, title='')
-    fig.update_layout(legend=dict(title='Shots Legend'), height=700)
+    fig.update_layout(legend=dict(title='Shots Legend'), height=650)
 
     # fig.show()
     return fig
@@ -312,7 +312,6 @@ home_score = pn.pane.Markdown("## 5")
 away_team = pn.pane.Markdown("## NSH", margin=(10, 0, 10, 0))
 away_score = pn.pane.Markdown("## 6")
 summary_row = pn.Row(away_team, away_logo, away_score, at_symbol, home_score, home_logo, home_team, margin=(10, 0)) 
-# pn.Spacer(width=175)
 
 filters_row = pn.FlexBox(pn.Spacer(width=50), date_picker, game_selector, summary_row, flex_wrap='nowrap', gap='50px')
 
@@ -327,6 +326,7 @@ main_plot = pn.bind(
     game=game_selector
 )
 plot_pane = pn.pane.Plotly(main_plot, sizing_mode="stretch_width") # , css_classes=['df-container'])
+
 
 # dataframe widgets for the boxscore
 boxscore = pn.bind(generate_boxscore, game=game_selector)
@@ -343,7 +343,7 @@ boxscore_pane = pn.pane.DataFrame(boxscore, index=False, max_rows=None, justify=
 # serve the simple app (no header)
 pn.Column(
     filters_row, 
-    pn.Row(plot_pane), #, sizing_mode='stretch_width'), 
+    pn.Row(plot_pane, sizing_mode='stretch_width'), 
     pn.Row(boxscore_pane, align="center"),
     align="center"
 ).servable()
